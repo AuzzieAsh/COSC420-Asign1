@@ -105,7 +105,7 @@ public class NeuralNetwork {
                     hiddenPatterns[i][j] = activationFunction(inputPatterns[i], inputWeights[i], hiddenBias[i][j]);
                 }
                 for (int j = 0; j < numOfOutput; j++) {
-                    //actualPatterns[i][j] = activationFunction(hiddenPatterns[i], hiddenWeights[i], actualBias[i][j]);
+                    actualPatterns[i][j] = activationFunction(hiddenPatterns[i], hiddenWeights[i], actualBias[i][j]);
                 }
             }
             
@@ -174,7 +174,9 @@ public class NeuralNetwork {
         
         double sum = 0.0;
         for (int i = 0; i < inputLayer.length; i++) {
-            sum += (inputLayer[i] * weights[i]);
+            for (int j = 0; j < weights.length; j++) {
+                sum += (inputLayer[i] * weights[j]);
+            }
         }
         sum += bias;
         return (double)(1/(1 + Math.pow(Math.E, -sum)));
