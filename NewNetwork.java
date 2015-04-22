@@ -30,6 +30,11 @@ public class NewNetwork {
         double[][] input_error = new double[0][0];
         double[][] hidden_error = new double[0][0];
         
+        double[][] input_changes = new double[0][0];
+        double[][] hidden_changes = new double[0][0];
+        double[][] input_prev = new double[0][0];
+        double[][] hidden_prev = new double[0][0];
+        
         double[][] hidden_bias = new double[0][0];
         double[][] output_bias = new double[0][0];
         
@@ -58,6 +63,11 @@ public class NewNetwork {
             
             input_error = new double[num_of_patterns][num_of_hidden];
             hidden_error = new double[num_of_patterns][num_of_output];
+            
+            input_changes = new double[num_of_patterns][num_of_hidden];
+            hidden_changes = new double[num_of_patterns][num_of_output];
+            input_prev = new double[num_of_patterns][num_of_hidden];
+            hidden_prev = new double[num_of_patterns][num_of_output];
             
             hidden_bias = new double[num_of_patterns][num_of_hidden];
             output_bias = new double[num_of_patterns][num_of_output];
@@ -92,8 +102,9 @@ public class NewNetwork {
             e.printStackTrace();
         }
         
-        //for (;;) {
-        while (epochs++ < 1000000) {
+        for (;;) {
+        //while (epochs < 1000000) {
+            epochs++;
             for (row = 0; row < num_of_patterns; row++) {
                 for (col = 0; col < num_of_hidden; col++) {
                     hidden_patterns[row][col] = activation_function(input_patterns[row], input_weights[row], hidden_bias[row][col]);
@@ -107,6 +118,7 @@ public class NewNetwork {
                 for (col = 0; col < num_of_output; col++) {
                     double error_value = (teaching_patterns[row][col] - output_patterns[row][col]) * output_patterns[row][col] * (1 - output_patterns[row][col]);
                     hidden_error[row][col] = error_value;
+                    hidden_changes[row][col] = (learning_constant * hidden_error[row][col] * hidden_patterns[row][col])* (momentum_constant * hidden_prev[row][col]);
                 }
                 for (col = 0; col < num_of_hidden; col++) {
                     double error_x_weight_sum = 0.0;
@@ -115,16 +127,19 @@ public class NewNetwork {
                     }
                     double error_value = hidden_patterns[row][col] * (1 - hidden_patterns[row][col]) * error_x_weight_sum;
                     input_error[row][col] = error_value;
+                    input_changes[row][col] = (learning_constant * input_error[row][col] * input_patterns[row][col]) + (momentum_constant * input_prev[row][col]);
                 }
             }
             
             for (row = 0; row < num_of_output; row++) {
                 for (col = 0; col < num_of_output; col++) {
-                    hidden_weights[row][col] = (learning_constant * hidden_error[row][col] * hidden_patterns[row][col]) + (momentum_constant * hidden_weights[row][col]);
+                    hidden_weights[row][col] += hidden_changes[row][col];
+                    hidden_prev[row][col] = hidden_changes[row][col];
                     output_bias[row][col] += (learning_constant * hidden_error[row][col] * 1);
                 }
                 for (col = 0; col < num_of_hidden; col++) {
-                    input_weights[row][col] = (learning_constant * input_error[row][col] * input_patterns[row][col]) + (momentum_constant * input_weights[row][col]);
+                    input_weights[row][col] += input_changes[row][col];
+                    input_prev[row][col] = input_changes[row][col];
                     hidden_bias[row][col] += (learning_constant * input_error[row][col] * 1);
                 }
             }
@@ -140,7 +155,7 @@ public class NewNetwork {
             
             error_pop = (double)(error_pop_sum / (num_of_output * num_of_patterns));
             if (error_pop < error_criterion) break;
-            //System.out.println(error_pop);
+            System.out.println(error_pop);
         }
         System.out.println("Error Pop: " + error_pop);
         System.out.println("Epochs: " + epochs);
