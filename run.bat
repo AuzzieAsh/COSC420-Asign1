@@ -1,3 +1,3 @@
 @echo on
-javac NeuralNetwork.java
+javac *.java
 java NeuralNetwork

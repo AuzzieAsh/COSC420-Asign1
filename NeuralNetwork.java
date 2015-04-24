@@ -1,195 +1,169 @@
-/*
-	COSC420 Neural Networks Assignment 1
-	Ashley Manson, 4061527
- */
 
 import java.util.*;
 import java.io.*;
 import java.lang.Math.*;
 
-public class NeuralNetwork {
+public class NewNetwork {
 
-    public static void main (String[] args) {
+    public static void main(String[] args) {
         
-        // File IO stuff
-        int numOfPatterns = 0;
+        int row, col;
+        int epochs = 0;
+        double error_pop = 0.0;
         
-        // param.txt values
-        int numOfInput = 0;
-        int numOfHidden = 0;
-        int numOfOutput = 0;
-        double learningConstant = 0.0; // alpha
-        double momentumConstant = 0.0;
-        double errorCriterion = 0.0;
+        int num_of_patterns = 0;
+        int num_of_input = 0;
+        int num_of_hidden = 0;
+        int num_of_output = 0;
+        double learning_constant = 0.0;
+        double momentum_constant = 0.0;
+        double error_criterion = 0.0;
         
-        // in.txt values
-        double[][] inputPatterns = new double[0][0];
+        NeuralNode[][] input_layers = new NeuralNode[0][0];
+        NeuralNode[][] hidden_layers = new NeuralNode[0][0];
+        NeuralNode[][] output_layers = new NeuralNode[0][0];
+        double[][] teaching_patterns = new double[0][0];
         
-        // teach.txt values
-        double[][] teachingPatterns = new double[0][0]; // target output
-
         try {
-            // Read data from param.txt
-            Scanner scan = new Scanner(new File("param.txt"));
-            numOfInput = scan.nextInt();
-            numOfHidden = scan.nextInt();
-            numOfOutput = scan.nextInt();
-            learningConstant = scan.nextDouble();
-            momentumConstant = scan.nextDouble();
-            errorCriterion = scan.nextDouble();
+            Scanner param = new Scanner(new File("param.txt"));
+            num_of_input = param.nextInt();
+            num_of_hidden = param.nextInt();
+            num_of_output = param.nextInt();
+            learning_constant = param.nextDouble();
+            momentum_constant = param.nextDouble();
+            error_criterion = param.nextDouble();
             
-            // Get the number of patterns
-            scan = new Scanner(new File("in.txt"));
-            while (scan.hasNextLine()) {
-                scan.nextLine();
-                numOfPatterns++;
+            Scanner line_read = new Scanner(new File("in.txt"));
+            while (line_read.hasNextLine()) {
+                line_read.nextLine();
+                num_of_patterns++;
             }
             
-            // Read data from in.txt
-            scan = new Scanner(new File("in.txt"));
-            inputPatterns = new double[numOfPatterns][numOfInput];
-            for (int i = 0; i < numOfPatterns; i++) {
-                for (int j = 0; j < numOfInput; j++) {
-                    inputPatterns[i][j] = scan.nextDouble();
+            input_layers = new NeuralNode[num_of_patterns][num_of_input];
+            hidden_layers = new NeuralNode[num_of_patterns][num_of_hidden];
+            output_layers = new NeuralNode[num_of_patterns][num_of_output];
+            teaching_patterns = new double[num_of_patterns][num_of_output];
+            
+            Scanner in = new Scanner(new File("in.txt"));
+            Scanner teach = new Scanner(new File("teach.txt"));
+            Random rng = new Random();
+            
+            for (row = 0; row < num_of_patterns; row++) {
+                
+                for (col = 0; col < num_of_input; col++) {
+                    input_layers[row][col] = new NeuralNode(num_of_hidden);
+                }
+                for (col = 0; col < num_of_hidden; col++) {
+                    hidden_layers[row][col] = new NeuralNode(num_of_output);
+                }
+                for (col = 0; col < num_of_output; col++) {
+                    output_layers[row][col] = new NeuralNode(0);
                 }
             }
             
-            // Read data from teach.txt
-            scan = new Scanner(new File("teach.txt"));
-            teachingPatterns = new double[numOfPatterns][numOfOutput];
-            for (int i = 0; i < numOfPatterns; i++) {
-                for (int j = 0; j < numOfOutput; j++) {
-                    teachingPatterns[i][j] = scan.nextDouble();
+            for (row = 0; row < num_of_patterns; row++) {
+                
+                for (col = 0; col < num_of_input; col++) {
+                    input_layers[row][col].set_pattern(in.nextDouble());
+                }
+                for (col = 0; col < num_of_output; col++) {
+                    teaching_patterns[row][col] = teach.nextDouble();
                 }
             }
         }
-        catch (Exception e) {
+        catch(Exception e) {
             e.printStackTrace();
         }
-        
-        int epochs = 0;
-        double errorPop = 1.0;
-        double errorPopSum = 0.0;
-        
-        double[][] hiddenPatterns = new double[numOfPatterns][numOfHidden];
-        double[][] actualPatterns = new double[numOfPatterns][numOfOutput];
-        
-        double[][] hiddenBias = new double[numOfPatterns][numOfHidden];
-        double[][] actualBias = new double[numOfPatterns][numOfOutput];
-        
-        double[][] inputWeights = new double[numOfPatterns][numOfHidden];
-        double[][] hiddenWeights = new double[numOfPatterns][numOfOutput];
-        
-        double[][] inputError = new double[numOfPatterns][numOfInput];
-        double[][] hiddenError = new double[numOfPatterns][numOfHidden];
-        
-        // Setup the initial weights and bias
-        Random rnjesus = new Random();
-        for (int i = 0; i < numOfPatterns; i++) {
-            for (int j = 0; j < numOfHidden; j++) {
-                inputWeights[i][j] = rnjesus.nextDouble() * 0.6 - 0.3;
-                hiddenBias[i][j] = rnjesus.nextDouble() * 0.6 - 0.3;
-            }
-        }
-        for (int i = 0; i < numOfPatterns; i++) {
-            for (int j = 0; j < numOfOutput; j++) {
-                hiddenWeights[i][j] = rnjesus.nextDouble() * 0.6 - 0.3;
-                actualBias[i][j] = rnjesus.nextDouble() * 0.6 - 0.3;
-            }
-        }
-        
-        while (epochs < 10000) {
-            // Compute the activiation for the hidden layer, and the output for the actual layer
-            for (int i = 0; i < numOfPatterns; i++) {
-                for (int j = 0; j < numOfHidden; j++) {
-                    hiddenPatterns[i][j] = activationFunction(inputPatterns[i], inputWeights[i], hiddenBias[i][j]);
-                }
-                for (int j = 0; j < numOfOutput; j++) {
-                    actualPatterns[i][j] = activationFunction(hiddenPatterns[i], hiddenWeights[i], actualBias[i][j]);
-                }
-            }
-            
-            for (int i = 0; i < numOfPatterns; i++) {
-                // Compute the error of the deriative for the output layer
-                for (int j = 0; j < numOfOutput; j++) {
-                    for (int k = 0; k < numOfInput; k++) {
-                        double errorValue = (teachingPatterns[i][j] - actualPatterns[i][j]) * actualPatterns[i][j] * (1 - actualPatterns[i][j]);
-                        inputError[i][k] = errorValue;
-                    }
-                }
-
-                // Compute the error for the hidden layer
-                for (int j = 0; j < numOfHidden; j++) {
-                    double errorWeightSum = 0.0;
-                    for (int k = 0; k < numOfOutput; k++) {
-                        errorWeightSum += inputError[i][k] * hiddenWeights[i][k];
-                    }
-                    hiddenError[i][j] = hiddenPatterns[i][j] * (1 - hiddenPatterns[i][j]) * errorWeightSum;
-                }
-            }
-            
-            // Make the Weight changes
-            for (int i = 0; i < numOfPatterns; i++) {
-                for (int j = 0; j < numOfOutput; j++) {
-                    hiddenWeights[i][j] = (learningConstant * hiddenError[i][j] * hiddenPatterns[i][j]) + (momentumConstant * hiddenWeights[i][j]);
-                    actualBias[i][j] += (learningConstant * hiddenError[i][j] * 1);
-                }
-                
-                for (int j = 0; j < numOfInput; j++) {
-                    inputWeights[i][j] = (learningConstant * inputError[i][j] * inputPatterns[i][j]) + (momentumConstant * inputWeights[i][j]);
-                    hiddenBias[i][j] += (learningConstant * inputError[i][j] * 1);
-                }
-            }
-            
-            for (int i = 0; i < numOfPatterns; i++) {
-                double patternError = 0.0;
-                for (int j = 0; j < numOfOutput; j++) {
-                    patternError += Math.pow(teachingPatterns[i][j] - actualPatterns[i][j], 2);
-                }
-                errorPopSum += patternError;
-            }
-            
-            errorPop = (double)(errorPopSum / (numOfOutput * numOfPatterns));
-            errorPopSum = 0.0;
-            
+        for (;;) {
+        //while (epochs < 10000) {
             epochs++;
-            if (errorPop < errorCriterion) break;
+            for (row = 0; row < num_of_patterns; row++) {
+                for (col = 0; col < num_of_hidden; col++) {
+                    hidden_layers[row][col].set_pattern(
+                                            activation_function(input_layers[row], col, hidden_layers[row][col].bias));
+                }
+            }
+            for (row = 0; row < num_of_patterns; row++) {
+                for (col = 0; col < num_of_output; col++) {
+                    output_layers[row][col].set_pattern(
+                                            activation_function(hidden_layers[row], col, output_layers[row][col].bias));
+                }
+            }
+            
+            for (row = 0; row < num_of_patterns; row++) {
+                for (col = 0; col < num_of_output; col++) {
+                    double pattern_value = output_layers[row][col].pattern;
+                    double error_value = (teaching_patterns[row][col] - pattern_value) * pattern_value * (1 - pattern_value);
+                    output_layers[row][col].set_error(error_value);
+                }
+            }
+            
+            for (row = 0; row < num_of_patterns; row++) {
+                for (col = 0; col < num_of_hidden; col++) {
+                    double pattern_value = hidden_layers[row][col].pattern;
+                    double error_x_weight_sum = 0.0;
+                    for (int err = 0; err < num_of_output; err++) {
+                        error_x_weight_sum += output_layers[row][err].error * hidden_layers[row][col].weight(err);
+                    }
+                    double error_value = pattern_value * (1 - pattern_value) * error_x_weight_sum;
+                    hidden_layers[row][col].set_error(error_value);
+                }
+            }
+            
+            for (row = 0; row < num_of_patterns; row++) {
+                for (col = 0; col < num_of_output; col++) {
+                    output_layers[row][col].set_bias(output_layers[row][col].bias += (learning_constant * output_layers[row][col].error * 1));
+                    for (int next = 0; next < num_of_output; next++) {
+                        double weight_change = (learning_constant * output_layers[row][col].error * hidden_layers[row][col].pattern) + (momentum_constant * hidden_layers[row][col].change(next));
+                        hidden_layers[row][col].set_weight(next, hidden_layers[row][col].weight(next) + weight_change);
+                        hidden_layers[row][col].set_change(next, weight_change);
+                    }
+                }
+            }
+            for (row = 0; row < num_of_patterns; row++) {
+                for (col = 0; col < num_of_hidden; col++) {
+                    hidden_layers[row][col].set_bias(hidden_layers[row][col].bias += (learning_constant * hidden_layers[row][col].error * 1));
+                    for (int next = 0; next < num_of_hidden; next++) {
+                        double weight_change = (learning_constant * hidden_layers[row][col].error * input_layers[row][col].pattern) + (momentum_constant * input_layers[row][col].change(next));
+                        input_layers[row][col].set_weight(next, input_layers[row][col].weight(next) + weight_change);
+                        input_layers[row][col].set_change(next, weight_change);
+                    }
+                }
+            }
+            
+            double error_pop_sum = 0.0;
+            for (row = 0; row < num_of_patterns; row++) {
+                double pattern_error = 0.0;
+                for (col = 0; col < num_of_output; col++) {
+                    pattern_error += Math.pow(teaching_patterns[row][col] - output_layers[row][col].pattern, 2);
+                }
+                error_pop_sum += pattern_error;
+            }
+            
+            error_pop = (double)(error_pop_sum / (num_of_output * num_of_patterns));
+            if (error_pop < error_criterion) break;
         }
-
-        
-        System.out.println("Error Pop: " + errorPop);
-        printDouble2DArray(hiddenPatterns);
-        System.out.println();
-        printDouble2DArray(actualPatterns);
-        System.out.println();
-        printDouble2DArray(hiddenBias);
-        System.out.println();
-        printDouble2DArray(actualBias);
-        
-        System.out.println("\nEpochs: " + epochs);
-        
+        System.out.println("Error Pop: " + error_pop);
+        System.out.println("Epochs: " + epochs);
+        print_output_teacher(output_layers, teaching_patterns);
     }
     
-    public static double activationFunction(double[] inputLayer, double[] weights, double bias) {
+    public static double activation_function(NeuralNode[] input_layer, int index, double bias) {
         
         double sum = 0.0;
-        for (int i = 0; i < inputLayer.length; i++) {
-            for (int j = 0; j < weights.length; j++) {
-                sum += (inputLayer[i] * weights[j]);
-            }
+        for (int node = 0; node < input_layer.length; node++) {
+            sum += (input_layer[node].pattern * input_layer[node].weight(index));
         }
         sum += bias;
         return (double)(1/(1 + Math.pow(Math.E, -sum)));
     }
     
-    /* Print Functions */
-    public static void printDouble2DArray(double[][] toPrint) {
-        for (int i = 0; i < toPrint.length; i++) {
-            for (int j = 0; j < toPrint[i].length; j++) {
-                System.out.print(toPrint[i][j] + " ");
+    public static void print_output_teacher(NeuralNode[][] print_output, double[][] print_teacher) {
+        for (int i = 0; i < print_output.length; i++) {
+            for (int j = 0; j < print_output[i].length; j++) {
+                System.out.print(print_output[i][j].pattern + " == " + print_teacher[i][j]);
             }
-            System.out.println("");
+            System.out.println();
         }
     }
-    
 }
