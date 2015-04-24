@@ -94,9 +94,6 @@ public class NewNetwork {
                     double pattern_value = output_layers[row][col].pattern;
                     double error_value = (teaching_patterns[row][col] - pattern_value) * pattern_value * (1 - pattern_value);
                     output_layers[row][col].set_error(error_value);
-                    /*
-                    hidden_changes[row][col] = (learning_constant * hidden_error[row][col] * hidden_patterns[row][col])* (momentum_constant * hidden_prev[row][col]);
-                     */
                 }
             }
             
@@ -109,34 +106,27 @@ public class NewNetwork {
                     }
                     double error_value = pattern_value * (1 - pattern_value) * error_x_weight_sum;
                     hidden_layers[row][col].set_error(error_value);
-                    /*
-                    input_changes[row][col] = (learning_constant * input_error[row][col] * input_patterns[row][col]) + (momentum_constant * input_prev[row][col]);
-                     */
                 }
             }
             
             for (row = 0; row < num_of_patterns; row++) {
                 for (col = 0; col < num_of_output; col++) {
                     output_layers[row][col].set_bias(output_layers[row][col].bias += (learning_constant * output_layers[row][col].error * 1));
-                    
-                    
-                    //double change_weight = someting + (momentum_constant * )
-                    
-                    /*
-                    hidden_weights[row][col] += hidden_changes[row][col];
-                    hidden_prev[row][col] = hidden_changes[row][col];
-                    output_bias[row][col] += (learning_constant * hidden_error[row][col] * 1);
-                     */
+                    for (int next = 0; next < num_of_output; next++) {
+                        double weight_change = (learning_constant * output_layers[row][col].error * hidden_layers[row][col].pattern) + (momentum_constant * hidden_layers[row][col].change(next));
+                        hidden_layers[row][col].set_weight(next, hidden_layers[row][col].weight(next) + weight_change);
+                        hidden_layers[row][col].set_change(next, weight_change);
+                    }
                 }
             }
             for (row = 0; row < num_of_patterns; row++) {
                 for (col = 0; col < num_of_hidden; col++) {
                     hidden_layers[row][col].set_bias(hidden_layers[row][col].bias += (learning_constant * hidden_layers[row][col].error * 1));
-                    /*
-                    input_weights[row][col] += input_changes[row][col];
-                    input_prev[row][col] = input_changes[row][col];
-                    hidden_bias[row][col] += (learning_constant * input_error[row][col] * 1);
-                     */
+                    for (int next = 0; next < num_of_hidden; next++) {
+                        double weight_change = (learning_constant * hidden_layers[row][col].error * input_layers[row][col].pattern) + (momentum_constant * input_layers[row][col].change(next));
+                        input_layers[row][col].set_weight(next, input_layers[row][col].weight(next) + weight_change);
+                        input_layers[row][col].set_change(next, weight_change);
+                    }
                 }
             }
             
@@ -151,7 +141,6 @@ public class NewNetwork {
             
             error_pop = (double)(error_pop_sum / (num_of_output * num_of_patterns));
             if (error_pop < error_criterion) break;
-            System.out.println(error_pop);
         }
         System.out.println("Error Pop: " + error_pop);
         System.out.println("Epochs: " + epochs);

@@ -8,6 +8,7 @@ public class NeuralNode {
     public double bias;
     public double error;
     public double weights[];
+    public double changes[];
     
     public NeuralNode(int num_of_next_layer) {
         Random rng = new Random();
@@ -15,8 +16,10 @@ public class NeuralNode {
         bias = rng.nextDouble() * 0.6 - 0.3;
         error = 0.0;
         weights = new double[num_of_next_layer];
+        changes = new double[num_of_next_layer];
         for (int i = 0; i < num_of_next_layer; i++) {
             weights[i] = rng.nextDouble() * 0.6 - 0.3;
+            changes[i] = 0.0;
         }
     }
     
@@ -36,6 +39,10 @@ public class NeuralNode {
         return weights[node];
     }
     
+    public double change(int node) {
+        return changes[node];
+    }
+    
     public void set_pattern(double pattern) {
         this.pattern = pattern;
     }
@@ -50,5 +57,9 @@ public class NeuralNode {
     
     public void set_weight(int node, double weight) {
         this.weights[node] = weight;
+    }
+    
+    public void set_change(int node, double change) {
+        this.changes[node] = change;
     }
 }
