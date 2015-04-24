@@ -3,7 +3,7 @@ import java.util.*;
 import java.io.*;
 import java.lang.Math.*;
 
-public class NewNetwork {
+public class NeuralNetwork {
 
     public static void main(String[] args) {
         
