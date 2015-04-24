@@ -8,7 +8,7 @@ public class NewNetwork {
     public static void main(String[] args) {
         
         int row, col;
-        int epochs = -1;
+        int epochs = 0;
         double error_pop = 0.0;
         
         int num_of_patterns = 0;
@@ -74,8 +74,9 @@ public class NewNetwork {
         catch(Exception e) {
             e.printStackTrace();
         }
-        
-        while (++epochs < 10000) {
+        for (;;) {
+        //while (epochs < 10000) {
+            epochs++;
             for (row = 0; row < num_of_patterns; row++) {
                 for (col = 0; col < num_of_hidden; col++) {
                     hidden_layers[row][col].set_pattern(
@@ -144,6 +145,7 @@ public class NewNetwork {
         }
         System.out.println("Error Pop: " + error_pop);
         System.out.println("Epochs: " + epochs);
+        print_output_teacher(output_layers, teaching_patterns);
     }
     
     public static double activation_function(NeuralNode[] input_layer, int index, double bias) {
@@ -156,10 +158,10 @@ public class NewNetwork {
         return (double)(1/(1 + Math.pow(Math.E, -sum)));
     }
     
-    public static void print_double_2D_array(double[][] to_print) {
-        for (int i = 0; i < to_print.length; i++) {
-            for (int j = 0; j < to_print[i].length; j++) {
-                System.out.print(to_print[i][j] + " ");
+    public static void print_output_teacher(NeuralNode[][] print_output, double[][] print_teacher) {
+        for (int i = 0; i < print_output.length; i++) {
+            for (int j = 0; j < print_output[i].length; j++) {
+                System.out.print(print_output[i][j].pattern + " == " + print_teacher[i][j]);
             }
             System.out.println();
         }
