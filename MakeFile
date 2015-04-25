@@ -6,7 +6,8 @@ JC = javac
 	
 CLASSES = \
 	NeuralNode.java \
-	NeuralNetwork.java
+	NeuralNetwork.java \
+	Main.java
 	
 default: classes
 

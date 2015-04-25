@@ -1,2 +1,2 @@
-@echo on
-java NeuralNetwork
+@echo off
+java Main

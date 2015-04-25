@@ -5,7 +5,7 @@ import java.lang.Math.*;
 
 public class NeuralNetwork {
 
-    public static void main(String[] args) {
+    public void run() {
         
         int row, col;
         int epochs = 0;
@@ -71,7 +71,7 @@ public class NeuralNetwork {
                 }
             }
         }
-        catch(Exception e) {
+        catch(IOException e) {
             e.printStackTrace();
         }
         for (;;) {
@@ -79,14 +79,12 @@ public class NeuralNetwork {
             epochs++;
             for (row = 0; row < num_of_patterns; row++) {
                 for (col = 0; col < num_of_hidden; col++) {
-                    hidden_layers[row][col].set_pattern(
-                                            activation_function(input_layers[row], col, hidden_layers[row][col].bias));
+                    hidden_layers[row][col].set_pattern(activation_function(input_layers[row], col, hidden_layers[row][col].bias));
                 }
             }
             for (row = 0; row < num_of_patterns; row++) {
                 for (col = 0; col < num_of_output; col++) {
-                    output_layers[row][col].set_pattern(
-                                            activation_function(hidden_layers[row], col, output_layers[row][col].bias));
+                    output_layers[row][col].set_pattern(activation_function(hidden_layers[row], col, output_layers[row][col].bias));
                 }
             }
             
@@ -120,17 +118,23 @@ public class NeuralNetwork {
                     }
                 }
             }
-            for (row = 0; row < num_of_patterns; row++) {
-                for (col = 0; col < num_of_hidden; col++) {
+			// For each row
+			for (row = 0; row < num_of_patterns; row++) {
+                // For each hidden node in a row, set its bias
+				for (col = 0; col < num_of_hidden; col++) {
                     hidden_layers[row][col].set_bias(hidden_layers[row][col].bias += (learning_constant * hidden_layers[row][col].error * 1));
-                    for (int next = 0; next < num_of_hidden; next++) {
-                        double weight_change = (learning_constant * hidden_layers[row][col].error * input_layers[row][col].pattern) + (momentum_constant * input_layers[row][col].change(next));
-                        input_layers[row][col].set_weight(next, input_layers[row][col].weight(next) + weight_change);
-                        input_layers[row][col].set_change(next, weight_change);
-                    }
+					// For each input node: "prev" = before each hidden node
+					for (int prev = 0; prev < num_of_input; prev++) {
+						// For each weight for an input node, set its weight: "next" = all the hidden nodes connected to an input node
+						for (int next = 0; next < num_of_hidden; next++) {
+							double weight_change = (learning_constant * hidden_layers[row][next].error * input_layers[row][prev].pattern) + (momentum_constant * input_layers[row][prev].change(next));
+							input_layers[row][prev].set_weight(next, input_layers[row][prev].weight(next) + weight_change);
+							input_layers[row][prev].set_change(next, weight_change);
+						}
+					}
                 }
             }
-            
+
             double error_pop_sum = 0.0;
             for (row = 0; row < num_of_patterns; row++) {
                 double pattern_error = 0.0;
@@ -145,10 +149,10 @@ public class NeuralNetwork {
         }
         System.out.println("Error Pop: " + error_pop);
         System.out.println("Epochs: " + epochs);
-        print_output_teacher(output_layers, teaching_patterns);
+        //print_output_teacher(teaching_patterns, output_layers);
     }
     
-    public static double activation_function(NeuralNode[] input_layer, int index, double bias) {
+    public double activation_function(NeuralNode[] input_layer, int index, double bias) {
         
         double sum = 0.0;
         for (int node = 0; node < input_layer.length; node++) {
@@ -158,12 +162,13 @@ public class NeuralNetwork {
         return (double)(1/(1 + Math.pow(Math.E, -sum)));
     }
     
-    public static void print_output_teacher(NeuralNode[][] print_output, double[][] print_teacher) {
-        for (int i = 0; i < print_output.length; i++) {
-            for (int j = 0; j < print_output[i].length; j++) {
-                System.out.print(print_output[i][j].pattern + " == " + print_teacher[i][j]);
+    public void print_output_teacher(double[][] print_teacher, NeuralNode[][] print_output) {
+		System.out.println("Teacher : Output");
+        for (int row = 0; row < print_output.length; row++) {
+            for (int col = 0; col < print_output[row].length; col++) {
+                System.out.printf("%.1f : %.3f", print_teacher[row][col], print_output[row][col].pattern);
             }
-            System.out.println();
+			System.out.println();
         }
     }
 }
