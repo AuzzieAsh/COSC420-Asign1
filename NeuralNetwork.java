@@ -5,7 +5,7 @@ import java.lang.Math.*;
 
 public class NeuralNetwork {
 
-    public void run(boolean print_verbose) {
+    public void run(boolean show_epochs, boolean show_weights, boolean show_activation) {
         
         int row, col;
         int epochs = 0;
@@ -77,6 +77,11 @@ public class NeuralNetwork {
         for (;;) {
         //while (epochs < 10000) {
             epochs++;
+			if (show_epochs && epochs % 100 == 0) {
+					System.out.printf("Epochs: %d\n", epochs);
+					System.out.printf("Population Error: %.6f\n", error_pop);
+			}
+			
             for (row = 0; row < num_of_patterns; row++) {
                 for (col = 0; col < num_of_hidden; col++) {
                     hidden_layers[row][col].set_pattern(activation_function(input_layers[row], col, hidden_layers[row][col].bias));
@@ -110,10 +115,10 @@ public class NeuralNetwork {
             
 			// For each row
             for (row = 0; row < num_of_patterns; row++) {
-				// For each output node, set its bias
+				// For each output node in a row, set its bias
 				for (col = 0; col < num_of_output; col++) {
                     output_layers[row][col].set_bias(output_layers[row][col].bias += (learning_constant * output_layers[row][col].error * 1));
-					// For each hidden: "prev" = before each output node
+					// For each hidden node: "prev" = before each output node
 					for (int prev = 0; prev < num_of_hidden; prev++) {
 						// For each weight for a hidden node, set its weight: "next" = all the output nodes connected to a hidden node	
 						for (int next = 0; next < num_of_output; next++) {
@@ -153,13 +158,32 @@ public class NeuralNetwork {
             error_pop = (double)(error_pop_sum / (num_of_output * num_of_patterns));
             if (error_pop < error_criterion) break;
         }
-		if (print_verbose) {
-			System.out.println("Error Pop: " + error_pop);
-			System.out.println("Epochs: " + epochs);
-			print_output_teacher(teaching_patterns, output_layers);
+		if (show_weights) {
+			System.out.printf("Hidden Weights\n");
+			for (row = 0; row < num_of_patterns; row++) {
+				for (col = 0; col < num_of_input; col++) {
+					System.out.print("Hidden " + col + " : ");
+					for (int next = 0; next < num_of_hidden; next++) {
+						System.out.printf("%.5f ", input_layers[row][col].weight(next));
+					}
+					System.out.println();
+				}
+				System.out.println();
+			}
+			System.out.printf("Output Weights\n");
+			for (row = 0; row < num_of_patterns; row++) {
+				for (col = 0; col < num_of_hidden; col++) {
+					System.out.print("Output " + col + " : ");
+					for (int next = 0; next < num_of_output; next++) {
+						System.out.printf("%.5f ", hidden_layers[row][col].weight(next));
+					}
+					System.out.println();
+				}
+				System.out.println();
+			}
 		}
-		else {
-			System.out.print(epochs + " ");
+		if (show_activation) {
+			
 		}
     }
     
