@@ -5,7 +5,7 @@ import java.lang.Math.*;
 
 public class NeuralNetwork {
 
-    public void run() {
+    public void run(boolean print_verbose) {
         
         int row, col;
         int epochs = 0;
@@ -108,14 +108,20 @@ public class NeuralNetwork {
                 }
             }
             
+			// For each row
             for (row = 0; row < num_of_patterns; row++) {
-                for (col = 0; col < num_of_output; col++) {
+				// For each output node, set its bias
+				for (col = 0; col < num_of_output; col++) {
                     output_layers[row][col].set_bias(output_layers[row][col].bias += (learning_constant * output_layers[row][col].error * 1));
-                    for (int next = 0; next < num_of_output; next++) {
-                        double weight_change = (learning_constant * output_layers[row][col].error * hidden_layers[row][col].pattern) + (momentum_constant * hidden_layers[row][col].change(next));
-                        hidden_layers[row][col].set_weight(next, hidden_layers[row][col].weight(next) + weight_change);
-                        hidden_layers[row][col].set_change(next, weight_change);
-                    }
+					// For each hidden: "prev" = before each output node
+					for (int prev = 0; prev < num_of_hidden; prev++) {
+						// For each weight for a hidden node, set its weight: "next" = all the output nodes connected to a hidden node	
+						for (int next = 0; next < num_of_output; next++) {
+							double weight_change = (learning_constant * output_layers[row][next].error * hidden_layers[row][prev].pattern) + (momentum_constant * hidden_layers[row][prev].change(next));
+							hidden_layers[row][prev].set_weight(next, hidden_layers[row][prev].weight(next) + weight_change);
+							hidden_layers[row][prev].set_change(next, weight_change);
+						}
+					}
                 }
             }
 			// For each row
@@ -147,9 +153,14 @@ public class NeuralNetwork {
             error_pop = (double)(error_pop_sum / (num_of_output * num_of_patterns));
             if (error_pop < error_criterion) break;
         }
-        System.out.println("Error Pop: " + error_pop);
-        System.out.println("Epochs: " + epochs);
-        //print_output_teacher(teaching_patterns, output_layers);
+		if (print_verbose) {
+			System.out.println("Error Pop: " + error_pop);
+			System.out.println("Epochs: " + epochs);
+			print_output_teacher(teaching_patterns, output_layers);
+		}
+		else {
+			System.out.print(epochs + " ");
+		}
     }
     
     public double activation_function(NeuralNode[] input_layer, int index, double bias) {
@@ -166,7 +177,7 @@ public class NeuralNetwork {
 		System.out.println("Teacher : Output");
         for (int row = 0; row < print_output.length; row++) {
             for (int col = 0; col < print_output[row].length; col++) {
-                System.out.printf("%.1f : %.3f", print_teacher[row][col], print_output[row][col].pattern);
+                System.out.printf("%.1f : %.3f ", print_teacher[row][col], print_output[row][col].pattern);
             }
 			System.out.println();
         }
