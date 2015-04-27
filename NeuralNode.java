@@ -1,4 +1,10 @@
-/* File: NeuralNode.java */
+/*
+	File: NeuralNode.java
+	Author: Ashley Manson
+	Description: This class represents a single Node for the NeuralNetwork 
+	class.
+	Developed with Java Version: 1.8.0_45
+*/
 
 import java.util.Random;
 
@@ -10,6 +16,7 @@ public class NeuralNode {
     public double weights[];
     public double changes[];
     
+	// Initialise a new Node
     public NeuralNode(int num_of_next_layer) {
         Random rng = new Random();
         pattern = 0.0;
@@ -23,6 +30,7 @@ public class NeuralNode {
         }
     }
     
+	// Getters and Setters
     public double pattern() {
         return pattern;
     }
