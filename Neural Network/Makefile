@@ -13,12 +13,17 @@ CLASSES = \
 
 MAIN = Main
 
+ifeq (run,$(firstword $(MAKECMDGOALS)))
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(RUN_ARGS):;@:)
+endif
+
 default: classes
 
 classes: $(CLASSES:.java=.class)
 
-run: $(MAIN).class
-	$(JVM) $(MAIN)
+run: classes
+	$(JVM) $(MAIN) $(RUN_ARGS)
 
 clean:
 	$(RM) *.class
